@@ -231,12 +231,14 @@ class PDFService {
 
   pw.Widget _buildHeader() {
     return pw.Container(
+      width: double.infinity,
       padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: PdfColors.black, width: 2),
         color: PdfColors.grey300,
       ),
       child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
             AppConstants.companyName,
