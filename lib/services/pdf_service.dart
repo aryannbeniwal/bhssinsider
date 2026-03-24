@@ -9,12 +9,20 @@ import '../utils/constants.dart';
 
 class PDFService {
   Future<void> generateInvoicePDF(Invoice invoice) async {
+    // Load font that supports rupee symbol
+    final font = await PdfGoogleFonts.notoSansRegular();
+    final fontBold = await PdfGoogleFonts.notoSansBold();
+
     final pdf = pw.Document();
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
+        theme: pw.ThemeData.withFont(
+          base: font,
+          bold: fontBold,
+        ),
         build: (context) => [
           // Company header
           _buildHeader(),
