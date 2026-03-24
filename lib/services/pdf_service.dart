@@ -52,6 +52,7 @@ class PDFService {
               // Left column - Invoice To
               pw.Expanded(
                 child: pw.Container(
+                  height: 130,
                   padding: const pw.EdgeInsets.all(10),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.black),
@@ -112,6 +113,7 @@ class PDFService {
               pw.Expanded(
                 flex: 2,
                 child: pw.Container(
+                  height: 120,
                   padding: const pw.EdgeInsets.all(10),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.black),
@@ -140,6 +142,7 @@ class PDFService {
               // Totals
               pw.Expanded(
                 child: pw.Container(
+                  height: 120,
                   padding: const pw.EdgeInsets.all(10),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.black),
@@ -167,6 +170,7 @@ class PDFService {
               // Bank details
               pw.Expanded(
                 child: pw.Container(
+                  height: 120,
                   padding: const pw.EdgeInsets.all(10),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.black),
@@ -207,14 +211,15 @@ class PDFService {
               // Signature
               pw.Expanded(
                 child: pw.Container(
+                  height: 120,
                   padding: const pw.EdgeInsets.all(10),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.black),
                   ),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    mainAxisAlignment: pw.MainAxisAlignment.end,
                     children: [
-                      pw.SizedBox(height: 40),
                       pw.Text(
                         'Authorized Signature',
                         style: pw.TextStyle(
