@@ -533,6 +533,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                         style: AppTextStyles.heading4,
                       ),
                       const SizedBox(height: 8),
+                      Text('Bank Name: ${AppConstants.bankName}'),
                       Text('Account Name: ${AppConstants.bankAccountName}'),
                       Text('Account Number: ${AppConstants.bankAccountNumber}'),
                       Text('IFSC Code: ${AppConstants.bankIFSC}'),

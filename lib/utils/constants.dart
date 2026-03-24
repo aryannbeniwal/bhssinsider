@@ -2,13 +2,15 @@ class AppConstants {
   // Company Details
   static const String companyName = 'BLACK HAWK SECURITY SOLUTION';
   static const String companyAddress =
-      'Old Thana Rd, Near Anaj Mandi Gate No. 1, Samalkha, Panipat – 132101';
-  static const String companyPhone1 = '+91 94668 80164';
-  static const String companyPhone2 = '+91 92555 34554';
+      '610, Behind Nagar Palika, Main GT Road, Samalkha, Panipat - 132101';
+  static const String companyPhone1 = '+91 92555 34554';
+  static const String companyPhone2 = '+91 94668 80164';
   static const String companyEmail = 'helloblackhawkss@gmail.com';
   static const String companyGSTIN = '06ABEFB7001K1ZP';
+  static const String companyPAN = 'ABEFB7001K';
 
   // Bank Details
+  static const String bankName = 'Capital Small Finance Bank';
   static const String bankAccountName = 'Black Hawk Security Solution';
   static const String bankAccountNumber = '168105000042';
   static const String bankIFSC = 'CLBL0000168';
@@ -30,5 +32,5 @@ class AppConstants {
   static const String keyUsername = 'username';
 
   // Invoice
-  static const String invoiceTitle = 'INVOICE OF SUPPLY';
+  static const String invoiceTitle = 'TAX INVOICE';
 }

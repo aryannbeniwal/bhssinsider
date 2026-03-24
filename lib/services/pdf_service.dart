@@ -175,6 +175,10 @@ class PDFService {
                       ),
                       pw.SizedBox(height: 5),
                       pw.Text(
+                        'Bank Name: ${AppConstants.bankName}',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                      pw.Text(
                         'Account Name: ${AppConstants.bankAccountName}',
                         style: const pw.TextStyle(fontSize: 10),
                       ),
