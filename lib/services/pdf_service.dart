@@ -46,56 +46,58 @@ class PDFService {
           pw.SizedBox(height: 20),
 
           // Invoice details section
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.black),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(1),
+              1: const pw.FlexColumnWidth(1),
+            },
             children: [
-              // Left column - Invoice To
-              pw.Expanded(
-                child: pw.Container(
-                  height: 130,
-                  padding: const pw.EdgeInsets.all(10),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Invoice To:',
-                        style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold,
-                          fontSize: 12,
+              pw.TableRow(
+                children: [
+                  // Left column - Invoice To
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Invoice To:',
+                          style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
+                        pw.SizedBox(height: 5),
+                        pw.Text(
+                          invoice.invoiceTo,
+                          style: const pw.TextStyle(fontSize: 11),
+                        ),
+                        pw.SizedBox(height: 5),
+                        pw.Text(
+                          invoice.invoiceToAddress,
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Right column - Invoice info
+                  pw.Table(
+                    border: pw.TableBorder.symmetric(
+                      inside: pw.BorderSide(color: PdfColors.black, width: 1),
+                      outside: pw.BorderSide.none,
+                    ),
+                    children: [
+                      _buildInfoTableRow('Invoice No.', invoice.invoiceNumber),
+                      _buildInfoTableRow(
+                        'Invoice Date',
+                        DateFormat('dd/MM/yyyy').format(invoice.invoiceDate),
                       ),
-                      pw.SizedBox(height: 5),
-                      pw.Text(
-                        invoice.invoiceTo,
-                        style: const pw.TextStyle(fontSize: 11),
-                      ),
-                      pw.SizedBox(height: 5),
-                      pw.Text(
-                        invoice.invoiceToAddress,
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
+                      _buildInfoTableRow('SAC', invoice.sac),
+                      _buildInfoTableRow('Place of Supply', invoice.placeOfSupply),
                     ],
                   ),
-                ),
-              ),
-              pw.SizedBox(width: 10),
-
-              // Right column - Invoice info
-              pw.Expanded(
-                child: pw.Column(
-                  children: [
-                    _buildInfoRow('Invoice No.', invoice.invoiceNumber),
-                    _buildInfoRow(
-                      'Invoice Date',
-                      DateFormat('dd/MM/yyyy').format(invoice.invoiceDate),
-                    ),
-                    _buildInfoRow('SAC', invoice.sac),
-                    _buildInfoRow('Place of Supply', invoice.placeOfSupply),
-                  ],
-                ),
+                ],
               ),
             ],
           ),
@@ -106,130 +108,124 @@ class PDFService {
           pw.SizedBox(height: 20),
 
           // Totals section
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.black),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(2),
+              1: const pw.FlexColumnWidth(1),
+            },
             children: [
-              // Amount in words
-              pw.Expanded(
-                flex: 2,
-                child: pw.Container(
-                  height: 120,
-                  padding: const pw.EdgeInsets.all(10),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Amount in Words:',
-                        style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold,
-                          fontSize: 10,
+              pw.TableRow(
+                children: [
+                  // Amount in words
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Amount in Words:',
+                          style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 10,
+                          ),
                         ),
-                      ),
-                      pw.SizedBox(height: 5),
-                      pw.Text(
-                        _numberToWords(invoice.grandTotal),
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                    ],
+                        pw.SizedBox(height: 5),
+                        pw.Text(
+                          _numberToWords(invoice.grandTotal),
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              pw.SizedBox(width: 10),
-
-              // Totals
-              pw.Expanded(
-                child: pw.Container(
-                  height: 120,
-                  padding: const pw.EdgeInsets.all(10),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black),
-                  ),
-                  child: pw.Column(
+                  // Totals
+                  pw.Table(
+                    border: pw.TableBorder.symmetric(
+                      inside: pw.BorderSide(color: PdfColors.black, width: 1),
+                      outside: pw.BorderSide.none,
+                    ),
                     children: [
-                      _buildTotalRow('Total', invoice.subtotal),
-                      pw.Divider(),
-                      _buildTotalRow('CGST (${invoice.cgstRate}%)', invoice.cgstAmount),
-                      _buildTotalRow('SGST (${invoice.sgstRate}%)', invoice.sgstAmount),
-                      pw.Divider(thickness: 2),
-                      _buildTotalRow('Grand Total', invoice.grandTotal, isBold: true),
+                      _buildTotalTableRow('Total', invoice.subtotal),
+                      _buildTotalTableRow('CGST (${invoice.cgstRate}%)', invoice.cgstAmount),
+                      _buildTotalTableRow('SGST (${invoice.sgstRate}%)', invoice.sgstAmount),
+                      _buildTotalTableRow('Grand Total', invoice.grandTotal, isBold: true),
                     ],
                   ),
-                ),
+                ],
               ),
             ],
           ),
           pw.SizedBox(height: 20),
 
           // Bank details and signature
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.black),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(1),
+              1: const pw.FlexColumnWidth(1),
+            },
             children: [
-              // Bank details
-              pw.Expanded(
-                child: pw.Container(
-                  height: 120,
-                  padding: const pw.EdgeInsets.all(10),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Bank Details:',
-                        style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold,
-                          fontSize: 11,
+              pw.TableRow(
+                children: [
+                  // Bank details
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Bank Details:',
+                          style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 11,
+                          ),
                         ),
-                      ),
-                      pw.SizedBox(height: 5),
-                      pw.Text(
-                        'Bank Name: ${AppConstants.bankName}',
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                      pw.Text(
-                        'Account Name: ${AppConstants.bankAccountName}',
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                      pw.Text(
-                        'Account Number: ${AppConstants.bankAccountNumber}',
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                      pw.Text(
-                        'IFSC Code: ${AppConstants.bankIFSC}',
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              pw.SizedBox(width: 10),
-
-              // Signature
-              pw.Expanded(
-                child: pw.Container(
-                  height: 120,
-                  padding: const pw.EdgeInsets.all(10),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    mainAxisAlignment: pw.MainAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        'Authorized Signature',
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
+                        pw.SizedBox(height: 5),
+                        pw.Text(
+                          'Bank Name: ${AppConstants.bankName}',
+                          style: const pw.TextStyle(fontSize: 10),
                         ),
-                      ),
-                    ],
+                        pw.Text(
+                          'Account Name: ${AppConstants.bankAccountName}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                        pw.Text(
+                          'Account Number: ${AppConstants.bankAccountNumber}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                        pw.Text(
+                          'IFSC Code: ${AppConstants.bankIFSC}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  // Signature
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                          'For ${AppConstants.companyName}',
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 60),
+                        pw.Text(
+                          'Authorized Signatory',
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -296,29 +292,27 @@ class PDFService {
     );
   }
 
-  pw.Widget _buildInfoRow(String label, String value) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(8),
-      margin: const pw.EdgeInsets.only(bottom: 2),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.black),
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(
+  pw.TableRow _buildInfoTableRow(String label, String value) {
+    return pw.TableRow(
+      children: [
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: pw.Text(
             label,
             style: pw.TextStyle(
               fontWeight: pw.FontWeight.bold,
               fontSize: 10,
             ),
           ),
-          pw.Text(
+        ),
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: pw.Text(
             value,
             style: const pw.TextStyle(fontSize: 10),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -383,28 +377,32 @@ class PDFService {
     );
   }
 
-  pw.Widget _buildTotalRow(String label, double amount, {bool isBold = false}) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 3),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(
+  pw.TableRow _buildTotalTableRow(String label, double amount, {bool isBold = false}) {
+    return pw.TableRow(
+      decoration: isBold ? const pw.BoxDecoration(color: PdfColors.grey200) : null,
+      children: [
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: pw.Text(
             label,
             style: pw.TextStyle(
               fontSize: 10,
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
           ),
-          pw.Text(
+        ),
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: pw.Text(
             '₹ ${amount.toStringAsFixed(2)}',
             style: pw.TextStyle(
               fontSize: 10,
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
+            textAlign: pw.TextAlign.right,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
