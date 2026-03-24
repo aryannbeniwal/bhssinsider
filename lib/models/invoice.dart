@@ -37,8 +37,16 @@ class Invoice {
     return subtotal * sgstRate / 100;
   }
 
-  double get grandTotal {
+  double get totalBeforeRounding {
     return subtotal + cgstAmount + sgstAmount;
+  }
+
+  double get roundOff {
+    return grandTotal - totalBeforeRounding;
+  }
+
+  double get grandTotal {
+    return totalBeforeRounding.roundToDouble();
   }
 
   Map<String, dynamic> toMap() {

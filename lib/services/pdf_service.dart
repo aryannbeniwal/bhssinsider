@@ -148,6 +148,7 @@ class PDFService {
                       _buildTotalTableRow('Total', invoice.subtotal),
                       _buildTotalTableRow('CGST (${invoice.cgstRate}%)', invoice.cgstAmount),
                       _buildTotalTableRow('SGST (${invoice.sgstRate}%)', invoice.sgstAmount),
+                      _buildTotalTableRow('Round Off', invoice.roundOff),
                       _buildTotalTableRow('Grand Total', invoice.grandTotal, isBold: true),
                     ],
                   ),
