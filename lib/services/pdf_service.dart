@@ -117,23 +117,57 @@ class PDFService {
             children: [
               pw.TableRow(
                 children: [
-                  // Amount in words
+                  // Amount in words and Terms
                   pw.Container(
                     padding: const pw.EdgeInsets.all(10),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
-                        pw.Text(
-                          'Amount in Words:',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 10,
-                          ),
+                        // Terms & Conditions / Notes
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'Terms & Conditions:',
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                            pw.SizedBox(height: 3),
+                            pw.Text(
+                              '1. Payment due within 30 days of invoice date.',
+                              style: const pw.TextStyle(fontSize: 9),
+                            ),
+                            pw.Text(
+                              '2. Please make cheques payable to ${AppConstants.companyName}.',
+                              style: const pw.TextStyle(fontSize: 9),
+                            ),
+                            pw.Text(
+                              '3. Late payments may incur additional charges.',
+                              style: const pw.TextStyle(fontSize: 9),
+                            ),
+                          ],
                         ),
-                        pw.SizedBox(height: 5),
-                        pw.Text(
-                          _numberToWords(invoice.grandTotal),
-                          style: const pw.TextStyle(fontSize: 10),
+                        pw.SizedBox(height: 15),
+                        // Amount in words
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'Amount in Words:',
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                            pw.SizedBox(height: 5),
+                            pw.Text(
+                              _numberToWords(invoice.grandTotal),
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                          ],
                         ),
                       ],
                     ),
