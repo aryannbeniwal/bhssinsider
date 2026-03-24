@@ -137,7 +137,7 @@ class PDFService {
                             ),
                             pw.SizedBox(height: 3),
                             pw.Text(
-                              '1. Payment due within 30 days of invoice date.',
+                              '1. Payment due within 05 days of invoice date.',
                               style: const pw.TextStyle(fontSize: 9),
                             ),
                             pw.Text(
@@ -182,8 +182,8 @@ class PDFService {
                       _buildTotalTableRow('Total', invoice.subtotal),
                       _buildTotalTableRow('CGST (${invoice.cgstRate}%)', invoice.cgstAmount),
                       _buildTotalTableRow('SGST (${invoice.sgstRate}%)', invoice.sgstAmount),
-                      _buildTotalTableRow('Round Off', invoice.roundOff),
-                      _buildTotalTableRow('Grand Total', invoice.grandTotal, isBold: true),
+                      _buildTotalTableRow('Round Off', invoice.roundOff, showSign: true),
+                      _buildTotalTableRow('Grand Total', invoice.grandTotal, isBold: true, decimals: 0),
                     ],
                   ),
                 ],
@@ -412,7 +412,15 @@ class PDFService {
     );
   }
 
-  pw.TableRow _buildTotalTableRow(String label, double amount, {bool isBold = false}) {
+  pw.TableRow _buildTotalTableRow(String label, double amount, {bool isBold = false, int decimals = 2, bool showSign = false}) {
+    String formattedAmount;
+    if (showSign) {
+      String sign = amount >= 0 ? '+' : '';
+      formattedAmount = '$sign₹${amount.toStringAsFixed(decimals)}';
+    } else {
+      formattedAmount = '₹${amount.toStringAsFixed(decimals)}';
+    }
+
     return pw.TableRow(
       decoration: isBold ? const pw.BoxDecoration(color: PdfColors.grey200) : null,
       children: [
@@ -429,7 +437,7 @@ class PDFService {
         pw.Container(
           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: pw.Text(
-            '₹ ${amount.toStringAsFixed(2)}',
+            formattedAmount,
             style: pw.TextStyle(
               fontSize: 10,
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
