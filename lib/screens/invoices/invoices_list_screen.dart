@@ -110,6 +110,7 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
 
   Future<void> _exportToPDF(Invoice invoice) async {
     try {
+      // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Generating PDF...'),
@@ -117,13 +118,22 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
         ),
       );
 
+      // Generate PDF
       await _pdfService.generateInvoicePDF(invoice);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('PDF generated and saved successfully'),
+          SnackBar(
+            content: Text(
+              'PDF generated successfully!\nUse the share dialog to save to Downloads or share via WhatsApp/Email',
+            ),
             backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
           ),
         );
       }
@@ -131,8 +141,9 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error generating PDF: $e'),
+            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

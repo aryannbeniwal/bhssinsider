@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../utils/colors.dart';
 import '../../utils/text_styles.dart';
@@ -69,6 +70,9 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                 particulars: item.particulars,
                 quantity: item.quantity,
                 rate: item.rate,
+                particularsController: TextEditingController(text: item.particulars),
+                quantityController: TextEditingController(text: item.quantity.toString()),
+                rateController: TextEditingController(text: item.rate.toString()),
               ))
           .toList();
     } else {
@@ -96,6 +100,12 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       _items.add(InvoiceItemWidget(
         key: UniqueKey(),
         serialNumber: _items.length + 1,
+        particulars: '',
+        quantity: 0,
+        rate: 0.0,
+        particularsController: TextEditingController(),
+        quantityController: TextEditingController(),
+        rateController: TextEditingController(),
       ));
     });
   }
@@ -104,10 +114,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     if (_items.length > 1) {
       setState(() {
         _items.removeAt(index);
-        // Update serial numbers
-        for (int i = 0; i < _items.length; i++) {
-          _items[i].serialNumber = i + 1;
-        }
       });
     }
   }
@@ -198,9 +204,11 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       });
 
       try {
-        final invoiceItems = _items.map((item) {
+        final invoiceItems = _items.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
           return InvoiceItem(
-            serialNumber: item.serialNumber,
+            serialNumber: index + 1,
             particulars: item.particularsController.text.trim(),
             quantity: int.parse(item.quantityController.text.trim()),
             rate: double.parse(item.rateController.text.trim()),
@@ -470,7 +478,19 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                             padding: const EdgeInsets.only(bottom: 8),
                             child: Row(
                               children: [
-                                Expanded(child: _items[index]),
+                                Expanded(
+                                  child: InvoiceItemWidget(
+                                    key: _items[index].key,
+                                    serialNumber: index + 1,
+                                    particulars: _items[index].particulars,
+                                    quantity: _items[index].quantity,
+                                    rate: _items[index].rate,
+                                    onChanged: () => setState(() {}),
+                                    particularsController: _items[index].particularsController,
+                                    quantityController: _items[index].quantityController,
+                                    rateController: _items[index].rateController,
+                                  ),
+                                ),
                                 if (_items.length > 1)
                                   IconButton(
                                     icon: const Icon(Icons.delete, color: AppColors.error),
@@ -598,35 +618,48 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 }
 
 class InvoiceItemWidget extends StatefulWidget {
-  int serialNumber;
+  final int serialNumber;
   final String particulars;
   final int quantity;
   final double rate;
+  final VoidCallback? onChanged;
 
-  late final TextEditingController particularsController;
-  late final TextEditingController quantityController;
-  late final TextEditingController rateController;
+  final TextEditingController particularsController;
+  final TextEditingController quantityController;
+  final TextEditingController rateController;
 
   InvoiceItemWidget({
     super.key,
     required this.serialNumber,
     this.particulars = '',
-    this.quantity = 1,
+    this.quantity = 0,
     this.rate = 0.0,
-  }) {
-    particularsController = TextEditingController(text: particulars);
-    quantityController = TextEditingController(
-      text: quantity > 0 ? quantity.toString() : '',
-    );
-    rateController = TextEditingController(
-      text: rate > 0 ? rate.toString() : '',
-    );
-  }
+    this.onChanged,
+    TextEditingController? particularsController,
+    TextEditingController? quantityController,
+    TextEditingController? rateController,
+  }) : particularsController = particularsController ?? TextEditingController(text: particulars),
+       quantityController = quantityController ?? TextEditingController(
+         text: quantity > 0 ? quantity.toString() : '',
+       ),
+       rateController = rateController ?? TextEditingController(
+         text: rate > 0 ? rate.toString() : '',
+       );
 
   bool validate() {
-    return particularsController.text.isNotEmpty &&
-        quantityController.text.isNotEmpty &&
-        rateController.text.isNotEmpty;
+    if (particularsController.text.trim().isEmpty) return false;
+
+    final qtyText = quantityController.text.trim();
+    if (qtyText.isEmpty) return false;
+    final qty = int.tryParse(qtyText);
+    if (qty == null || qty <= 0) return false;
+
+    final rateText = rateController.text.trim();
+    if (rateText.isEmpty) return false;
+    final rt = double.tryParse(rateText);
+    if (rt == null || rt <= 0) return false;
+
+    return true;
   }
 
   double getAmount() {
@@ -676,9 +709,16 @@ class _InvoiceItemWidgetState extends State<InvoiceItemWidget> {
                       labelText: 'QTY',
                       border: OutlineInputBorder(),
                       isDense: true,
+                      hintText: '0',
                     ),
                     keyboardType: TextInputType.number,
-                    onChanged: (_) => setState(() {}),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    onChanged: (value) {
+                      setState(() {});
+                      widget.onChanged?.call();
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -691,8 +731,14 @@ class _InvoiceItemWidgetState extends State<InvoiceItemWidget> {
                       border: OutlineInputBorder(),
                       isDense: true,
                     ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => setState(() {}),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                    ],
+                    onChanged: (_) {
+                      setState(() {});
+                      widget.onChanged?.call();
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),

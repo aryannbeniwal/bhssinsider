@@ -46,7 +46,7 @@ class Invoice {
   }
 
   double get grandTotal {
-    return totalBeforeRounding.roundToDouble();
+    return totalBeforeRounding.round().toDouble();
   }
 
   Map<String, dynamic> toMap() {

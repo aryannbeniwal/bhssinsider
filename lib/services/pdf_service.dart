@@ -9,11 +9,12 @@ import '../utils/constants.dart';
 
 class PDFService {
   Future<void> generateInvoicePDF(Invoice invoice) async {
-    // Load font that supports rupee symbol
-    final font = await PdfGoogleFonts.notoSansRegular();
-    final fontBold = await PdfGoogleFonts.notoSansBold();
+    try {
+      // Load font that supports rupee symbol
+      final font = await PdfGoogleFonts.notoSansRegular();
+      final fontBold = await PdfGoogleFonts.notoSansBold();
 
-    final pdf = pw.Document();
+      final pdf = pw.Document();
 
     pdf.addPage(
       pw.MultiPage(
@@ -26,14 +27,19 @@ class PDFService {
         build: (context) => [
           // Company header
           _buildHeader(),
-          pw.SizedBox(height: 20),
+          // pw.SizedBox(height: 20),
 
           // Invoice of Supply title
           pw.Container(
             alignment: pw.Alignment.center,
             padding: const pw.EdgeInsets.symmetric(vertical: 10),
             decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: PdfColors.black, width: 2),
+              border: pw.Border(
+                top: pw.BorderSide(color: PdfColors.black, width: 1),
+                left: pw.BorderSide(color: PdfColors.black, width: 2),
+                right: pw.BorderSide(color: PdfColors.black, width: 2),
+                bottom: pw.BorderSide(color: PdfColors.black, width: 1),
+              ),
             ),
             child: pw.Text(
               AppConstants.invoiceTitle,
@@ -43,14 +49,19 @@ class PDFService {
               ),
             ),
           ),
-          pw.SizedBox(height: 20),
+          // pw.SizedBox(height: 20),
 
           // Invoice details section
           pw.Table(
-            border: pw.TableBorder.all(color: PdfColors.black),
+            border: pw.TableBorder(
+              left: pw.BorderSide(color: PdfColors.black, width: 2),
+              right: pw.BorderSide(color: PdfColors.black, width: 2),
+              bottom: pw.BorderSide(color: PdfColors.black, width: 1),
+              verticalInside: pw.BorderSide(color: PdfColors.black, width: 1),
+            ),
             columnWidths: {
-              0: const pw.FlexColumnWidth(1),
-              1: const pw.FlexColumnWidth(1),
+              0: const pw.FlexColumnWidth(3),
+              1: const pw.FlexColumnWidth(2),
             },
             children: [
               pw.TableRow(
@@ -82,34 +93,39 @@ class PDFService {
                     ),
                   ),
                   // Right column - Invoice info
-                  pw.Table(
-                    border: pw.TableBorder.symmetric(
-                      inside: pw.BorderSide(color: PdfColors.black, width: 1),
-                      outside: pw.BorderSide.none,
-                    ),
-                    children: [
-                      _buildInfoTableRow('Invoice No.', invoice.invoiceNumber),
-                      _buildInfoTableRow(
-                        'Invoice Date',
-                        DateFormat('dd/MM/yyyy').format(invoice.invoiceDate),
+                  pw.Container(
+                    child: pw.Table(
+                      border: pw.TableBorder(
+                        horizontalInside: pw.BorderSide(color: PdfColors.black, width: 1),
                       ),
-                      _buildInfoTableRow('SAC', invoice.sac),
-                      _buildInfoTableRow('Place of Supply', invoice.placeOfSupply),
-                    ],
+                      children: [
+                        _buildInfoTableRow('Invoice No.', invoice.invoiceNumber),
+                        _buildInfoTableRow(
+                          'Invoice Date',
+                          DateFormat('dd/MM/yyyy').format(invoice.invoiceDate),
+                        ),
+                        _buildInfoTableRow('SAC', invoice.sac),
+                        _buildInfoTableRow('Place of Supply', invoice.placeOfSupply),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-          pw.SizedBox(height: 20),
-
+          // pw.SizedBox(height: 8),
           // Items table
           _buildItemsTable(invoice),
-          pw.SizedBox(height: 20),
-
+          pw.SizedBox(height: 8),
           // Totals section
           pw.Table(
-            border: pw.TableBorder.all(color: PdfColors.black),
+            border: pw.TableBorder(
+              top: pw.BorderSide(color: PdfColors.black, width: 1),
+              left: pw.BorderSide(color: PdfColors.black, width: 2),
+              right: pw.BorderSide(color: PdfColors.black, width: 2),
+              bottom: pw.BorderSide(color: PdfColors.black, width: 1),
+              verticalInside: pw.BorderSide(color: PdfColors.black, width: 1),
+            ),
             columnWidths: {
               0: const pw.FlexColumnWidth(2),
               1: const pw.FlexColumnWidth(1),
@@ -174,9 +190,8 @@ class PDFService {
                   ),
                   // Totals
                   pw.Table(
-                    border: pw.TableBorder.symmetric(
-                      inside: pw.BorderSide(color: PdfColors.black, width: 1),
-                      outside: pw.BorderSide.none,
+                    border: pw.TableBorder(
+                      horizontalInside: pw.BorderSide(color: PdfColors.black, width: 1),
                     ),
                     children: [
                       _buildTotalTableRow('Total', invoice.subtotal),
@@ -190,11 +205,16 @@ class PDFService {
               ),
             ],
           ),
-          pw.SizedBox(height: 20),
+          // pw.SizedBox(height: 20),
 
           // Bank details and signature
           pw.Table(
-            border: pw.TableBorder.all(color: PdfColors.black),
+            border: pw.TableBorder(
+              left: pw.BorderSide(color: PdfColors.black, width: 2),
+              right: pw.BorderSide(color: PdfColors.black, width: 2),
+              bottom: pw.BorderSide(color: PdfColors.black, width: 2),
+              verticalInside: pw.BorderSide(color: PdfColors.black, width: 1),
+            ),
             columnWidths: {
               0: const pw.FlexColumnWidth(1),
               1: const pw.FlexColumnWidth(1),
@@ -268,13 +288,18 @@ class PDFService {
       ),
     );
 
-    // Save the PDF
-    await _savePDF(pdf, invoice.invoiceNumber);
+      // Save the PDF
+      await _savePDF(pdf, invoice.invoiceNumber);
 
-    // Also allow printing/sharing
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
+      // Also allow printing/sharing
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
+    } catch (e, stackTrace) {
+      print('PDF Generation Error: $e');
+      print('Stack trace: $stackTrace');
+      throw Exception('Failed to generate PDF: $e');
+    }
   }
 
   pw.Widget _buildHeader() {
@@ -282,7 +307,12 @@ class PDFService {
       width: double.infinity,
       padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.black, width: 2),
+        border: pw.Border(
+          top: pw.BorderSide(color: PdfColors.black, width: 2),
+          left: pw.BorderSide(color: PdfColors.black, width: 2),
+          right: pw.BorderSide(color: PdfColors.black, width: 2),
+          bottom: pw.BorderSide(color: PdfColors.black, width: 1),
+        ),
         color: PdfColors.grey300,
       ),
       child: pw.Column(
@@ -353,7 +383,13 @@ class PDFService {
 
   pw.Widget _buildItemsTable(Invoice invoice) {
     return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.black),
+      border: pw.TableBorder(
+        left: pw.BorderSide(color: PdfColors.black, width: 2),
+        right: pw.BorderSide(color: PdfColors.black, width: 2),
+        bottom: pw.BorderSide(color: PdfColors.black, width: 1),
+        horizontalInside: pw.BorderSide(color: PdfColors.black, width: 1),
+        verticalInside: pw.BorderSide(color: PdfColors.black, width: 1),
+      ),
       columnWidths: {
         0: const pw.FixedColumnWidth(40),
         1: const pw.FlexColumnWidth(3),
@@ -536,26 +572,64 @@ class PDFService {
     return result.trim();
   }
 
-  Future<void> _savePDF(pw.Document pdf, String invoiceNumber) async {
+  String _sanitizeFilename(String filename) {
+    // Remove or replace invalid characters for filenames
+    // Invalid: / \ : * ? " < > |
+    return filename
+        .replaceAll('/', '-')
+        .replaceAll('\\', '-')
+        .replaceAll(':', '-')
+        .replaceAll('*', '-')
+        .replaceAll('?', '-')
+        .replaceAll('"', '-')
+        .replaceAll('<', '-')
+        .replaceAll('>', '-')
+        .replaceAll('|', '-');
+  }
+
+  Future<String> _savePDF(pw.Document pdf, String invoiceNumber) async {
     try {
-      final Directory? directory = await getExternalStorageDirectory();
-      if (directory != null) {
-        final String dirPath = '${directory.path}/BHSS_Invoices';
-        await Directory(dirPath).create(recursive: true);
+      // Generate PDF bytes first
+      final bytes = await pdf.save();
+      print('PDF bytes generated: ${bytes.length} bytes');
 
-        final String filePath = '$dirPath/$invoiceNumber.pdf';
-        final File file = File(filePath);
-        await file.writeAsBytes(await pdf.save());
-      }
-    } catch (e) {
-      // Fallback to app documents directory
-      final Directory directory = await getApplicationDocumentsDirectory();
-      final String dirPath = '${directory.path}/BHSS_Invoices';
-      await Directory(dirPath).create(recursive: true);
+      // Sanitize the invoice number for use in filename
+      final safeFilename = _sanitizeFilename(invoiceNumber);
+      print('Original invoice number: $invoiceNumber');
+      print('Sanitized filename: $safeFilename');
 
-      final String filePath = '$dirPath/$invoiceNumber.pdf';
-      final File file = File(filePath);
-      await file.writeAsBytes(await pdf.save());
+      // Get the app's documents directory (always works, no permission needed)
+      final directory = await getApplicationDocumentsDirectory();
+      final dirPath = directory.path;
+      print('Using directory: $dirPath');
+
+      // Create BHSS_Invoices subfolder
+      final invoicesPath = '$dirPath/BHSS_Invoices';
+      print('Creating invoices directory: $invoicesPath');
+
+      final invoicesDir = Directory(invoicesPath);
+
+      // Create directory with recursive flag
+      await invoicesDir.create(recursive: true);
+      print('Directory created/verified');
+
+      // Save PDF file with sanitized filename
+      final filePath = '$invoicesPath/$safeFilename.pdf';
+      print('Saving PDF to: $filePath');
+
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+
+      // Verify file was created
+      final exists = await file.exists();
+      final size = await file.length();
+      print('PDF saved successfully - Exists: $exists, Size: $size bytes');
+
+      return filePath;
+    } catch (e, stackTrace) {
+      print('Error in _savePDF: $e');
+      print('Stack trace: $stackTrace');
+      throw Exception('Failed to save PDF: $e');
     }
   }
 }
