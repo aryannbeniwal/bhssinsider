@@ -4,6 +4,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import '../models/invoice.dart';
 import '../utils/constants.dart';
 
@@ -13,6 +14,10 @@ class PDFService {
       // Load font that supports rupee symbol
       final font = await PdfGoogleFonts.notoSansRegular();
       final fontBold = await PdfGoogleFonts.notoSansBold();
+
+      // Load company logo
+      final logoBytes = await rootBundle.load('assets/images/logo_bw_without_bg.png');
+      final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
 
       final pdf = pw.Document();
 
@@ -30,7 +35,7 @@ class PDFService {
 
           return [
           // Company header
-          _buildHeader(),
+          _buildHeader(logoImage),
           // pw.SizedBox(height: 20),
 
           // Invoice of Supply title
@@ -320,7 +325,7 @@ class PDFService {
     }
   }
 
-  pw.Widget _buildHeader() {
+  pw.Widget _buildHeader(pw.ImageProvider logoImage) {
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.all(15),
@@ -333,42 +338,57 @@ class PDFService {
         ),
         color: PdfColors.grey300,
       ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          pw.Text(
-            AppConstants.companyName,
-            style: pw.TextStyle(
-              fontSize: 20,
-              fontWeight: pw.FontWeight.bold,
+          // Left column - Company details
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  AppConstants.companyName,
+                  style: pw.TextStyle(
+                    fontSize: 20,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  AppConstants.companyAddress,
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  'Contact: ${AppConstants.companyPhone1}, ${AppConstants.companyPhone2}',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+                pw.Text(
+                  'Email: ${AppConstants.companyEmail}',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  'GSTIN: ${AppConstants.companyGSTIN}',
+                  style: pw.TextStyle(
+                    fontSize: 11,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            textAlign: pw.TextAlign.center,
           ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            AppConstants.companyAddress,
-            style: const pw.TextStyle(fontSize: 10),
-            textAlign: pw.TextAlign.center,
-          ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            'Contact: ${AppConstants.companyPhone1}, ${AppConstants.companyPhone2}',
-            style: const pw.TextStyle(fontSize: 10),
-            textAlign: pw.TextAlign.center,
-          ),
-          pw.Text(
-            'Email: ${AppConstants.companyEmail}',
-            style: const pw.TextStyle(fontSize: 10),
-            textAlign: pw.TextAlign.center,
-          ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            'GSTIN: ${AppConstants.companyGSTIN}',
-            style: pw.TextStyle(
-              fontSize: 11,
-              fontWeight: pw.FontWeight.bold,
+          // Right column - Logo only
+          pw.Container(
+            width: 80,
+            child: pw.Center(
+              child: pw.Image(
+                logoImage,
+                width: 90,
+                height: 90,
+                fit: pw.BoxFit.contain,
+              ),
             ),
-            textAlign: pw.TextAlign.center,
           ),
         ],
       ),
@@ -521,7 +541,7 @@ class PDFService {
 
   String _numberToWords(double number) {
     final int amount = number.toInt();
-    if (amount == 0) return 'Zero Rupees Only';
+    if (amount == 0) return 'ZERO RUPEES ONLY';
 
     final List<String> ones = [
       '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
@@ -541,7 +561,7 @@ class PDFService {
       result += '${_convertHundreds(crores)} Crore ';
       int remainder = amount % 10000000;
       if (remainder > 0) {
-        result += _numberToWords(remainder.toDouble()).replaceAll(' Rupees Only', ' ');
+        result += _numberToWords(remainder.toDouble()).replaceAll(' RUPEES ONLY', ' ');
       }
     } else if (amount >= 100000) {
       // Lakhs
@@ -549,7 +569,7 @@ class PDFService {
       result += '${_convertHundreds(lakhs)} Lakh ';
       int remainder = amount % 100000;
       if (remainder > 0) {
-        result += _numberToWords(remainder.toDouble()).replaceAll(' Rupees Only', ' ');
+        result += _numberToWords(remainder.toDouble()).replaceAll(' RUPEES ONLY', ' ');
       }
     } else if (amount >= 1000) {
       // Thousands
@@ -557,7 +577,7 @@ class PDFService {
       result += '${_convertHundreds(thousands)} Thousand ';
       int remainder = amount % 1000;
       if (remainder > 0) {
-        result += _numberToWords(remainder.toDouble()).replaceAll(' Rupees Only', ' ');
+        result += _numberToWords(remainder.toDouble()).replaceAll(' RUPEES ONLY', ' ');
       }
     } else if (amount >= 100) {
       // Hundreds
@@ -573,7 +593,7 @@ class PDFService {
       result += ones[amount];
     }
 
-    return '${result.trim()} Rupees Only';
+    return '${result.trim()} RUPEES ONLY'.toUpperCase();
   }
 
   String _convertHundreds(int number) {

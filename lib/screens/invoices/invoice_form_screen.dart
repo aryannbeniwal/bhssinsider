@@ -181,7 +181,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     // Simple implementation for converting numbers to words
     // This is a basic version - you can enhance it
     final int amount = number.toInt();
-    if (amount == 0) return 'Zero Rupees Only';
+    if (amount == 0) return 'ZERO RUPEES ONLY';
 
     final List<String> ones = [
       '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
@@ -194,15 +194,15 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     ];
 
     if (amount < 20) {
-      return '${ones[amount]} Rupees Only';
+      return '${ones[amount]} RUPEES ONLY'.toUpperCase();
     } else if (amount < 100) {
-      return '${tens[amount ~/ 10]} ${ones[amount % 10]} Rupees Only';
+      return '${tens[amount ~/ 10]} ${ones[amount % 10]} RUPEES ONLY'.toUpperCase();
     } else if (amount < 1000) {
-      return '${ones[amount ~/ 100]} Hundred ${_numberToWords(amount % 100).replaceAll(' Rupees Only', '')} Rupees Only';
+      return '${ones[amount ~/ 100]} Hundred ${_numberToWords(amount % 100).replaceAll(' RUPEES ONLY', '')} RUPEES ONLY'.toUpperCase();
     } else if (amount < 100000) {
-      return '${_numberToWords(amount / 1000).replaceAll(' Rupees Only', '')} Thousand ${_numberToWords(amount % 1000).replaceAll(' Rupees Only', '')} Rupees Only';
+      return '${_numberToWords(amount / 1000).replaceAll(' RUPEES ONLY', '')} Thousand ${_numberToWords(amount % 1000).replaceAll(' RUPEES ONLY', '')} RUPEES ONLY'.toUpperCase();
     } else {
-      return '${_numberToWords(amount / 100000).replaceAll(' Rupees Only', '')} Lakh ${_numberToWords(amount % 100000).replaceAll(' Rupees Only', '')} Rupees Only';
+      return '${_numberToWords(amount / 100000).replaceAll(' RUPEES ONLY', '')} Lakh ${_numberToWords(amount % 100000).replaceAll(' RUPEES ONLY', '')} RUPEES ONLY'.toUpperCase();
     }
   }
 
@@ -313,44 +313,61 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                 color: AppColors.primary,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        AppConstants.companyName,
-                        style: AppTextStyles.heading3.copyWith(
-                          color: AppColors.textLight,
+                      // Left column - Company details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppConstants.companyName,
+                              style: AppTextStyles.heading3.copyWith(
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              AppConstants.companyAddress,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Contact: ${AppConstants.companyPhone1}, ${AppConstants.companyPhone2}',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                            Text(
+                              'Email: ${AppConstants.companyEmail}',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'GSTIN: ${AppConstants.companyGSTIN}',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        AppConstants.companyAddress,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textLight,
+                      // Right column - Logo only
+                      SizedBox(
+                        width: 80,
+                        child: Center(
+                          child: Image.asset(
+                            'assets/images/logo_without_bg.png',
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Contact: ${AppConstants.companyPhone1}, ${AppConstants.companyPhone2}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textLight,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        'Email: ${AppConstants.companyEmail}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textLight,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        'GSTIN: ${AppConstants.companyGSTIN}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.accent,
-                        ),
-                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
