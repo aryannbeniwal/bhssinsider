@@ -339,13 +339,41 @@ class DatabaseService {
     );
   }
 
-  // Get next invoice number
+  // Get next invoice number in format: serial/FY (e.g., 01/2025-26)
   Future<String> getNextInvoiceNumber() async {
     final db = await database;
+
+    // Calculate current financial year (April to March)
+    final now = DateTime.now();
+    int startYear, endYear;
+
+    if (now.month >= 4) {
+      // April onwards: FY is current year to next year
+      startYear = now.year;
+      endYear = now.year + 1;
+    } else {
+      // Jan to March: FY is previous year to current year
+      startYear = now.year - 1;
+      endYear = now.year;
+    }
+
+    // Calculate FY start and end dates
+    final fyStart = DateTime(startYear, 4, 1); // April 1
+    final fyEnd = DateTime(endYear, 3, 31, 23, 59, 59); // March 31
+
+    // Count invoices in current financial year
     final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM invoices',
+      'SELECT COUNT(*) as count FROM invoices WHERE invoiceDate >= ? AND invoiceDate <= ?',
+      [fyStart.toIso8601String(), fyEnd.toIso8601String()],
     );
+
     int count = result.first['count'] as int;
-    return 'INV${(count + 1).toString().padLeft(6, '0')}';
+    int serialNumber = count + 1;
+
+    // Format: serial/FY (e.g., 01/2025-26)
+    String serial = serialNumber.toString().padLeft(2, '0');
+    String fy = '$startYear-${endYear.toString().substring(2)}';
+
+    return '$serial/$fy';
   }
 }

@@ -189,7 +189,6 @@ class PDFService {
                               'Amount in Words:',
                               style: pw.TextStyle(
                                 font: theme.defaultTextStyle.font,
-                                fontWeight: pw.FontWeight.bold,
                                 fontSize: 10,
                               ),
                             ),
@@ -197,7 +196,6 @@ class PDFService {
                             pw.Text(
                               _numberToWords(invoice.grandTotal),
                               style: pw.TextStyle(
-                                font: theme.defaultTextStyle.font,
                                 fontSize: 10,
                                 fontWeight: pw.FontWeight.bold,
                               ),
@@ -408,6 +406,7 @@ class PDFService {
 
     return pw.Table(
       border: pw.TableBorder(
+        top: pw.BorderSide(color: PdfColors.black, width: 1),
         left: pw.BorderSide(color: PdfColors.black, width: 2),
         right: pw.BorderSide(color: PdfColors.black, width: 2),
         bottom: pw.BorderSide(color: PdfColors.black, width: 1),
@@ -609,7 +608,10 @@ class PDFService {
 
   String _formatCurrency(double amount, {int decimals = 2}) {
     // Format number with Indian comma system
-    final formatter = NumberFormat('#,##,##0.${'0' * decimals}', 'en_IN');
+    String pattern = decimals > 0
+        ? '#,##,##0.${'0' * decimals}'
+        : '#,##,##0';
+    final formatter = NumberFormat(pattern, 'en_IN');
     return formatter.format(amount);
   }
 

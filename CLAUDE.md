@@ -43,7 +43,7 @@ flutter test
 - **Tables**: employees, invoices, invoice_items, events, vacancies
 - All CRUD operations go through DatabaseService methods
 - Invoice items have foreign key relationship with invoices (ON DELETE CASCADE)
-- Invoice number generation: `INV000001` format with auto-incrementing counter
+- Invoice number generation: `01/2025-26` format (serial/financial-year, resets each FY April-March)
 
 ### Models
 - **Employee** (`lib/models/employee.dart`) - Employee management with salary, position, active status
