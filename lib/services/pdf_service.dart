@@ -69,6 +69,7 @@ class PDFService {
             },
             children: [
               pw.TableRow(
+                verticalAlignment: pw.TableCellVerticalAlignment.top,
                 children: [
                   // Left column - Invoice To
                   pw.Container(
@@ -96,29 +97,36 @@ class PDFService {
                       ],
                     ),
                   ),
-                  // Right column - Invoice info
-                  pw.Container(
-                    child: pw.Table(
-                      border: pw.TableBorder(
-                        horizontalInside: pw.BorderSide(color: PdfColors.black, width: 1),
+                  // Right column - Invoice info with fixed heights
+                  pw.Column(
+                    children: [
+                      _buildInfoRow('Invoice No.', invoice.invoiceNumber, font: theme.defaultTextStyle.font),
+                      pw.Container(
+                        height: 1,
+                        color: PdfColors.black,
                       ),
-                      children: [
-                        _buildInfoTableRow('Invoice No.', invoice.invoiceNumber, font: theme.defaultTextStyle.font),
-                        _buildInfoTableRow(
-                          'Invoice Date',
-                          DateFormat('dd/MM/yyyy').format(invoice.invoiceDate),
-                          font: theme.defaultTextStyle.font,
-                        ),
-                        _buildInfoTableRow('SAC', invoice.sac, font: theme.defaultTextStyle.font),
-                        _buildInfoTableRow('Place of Supply', invoice.placeOfSupply, font: theme.defaultTextStyle.font),
-                      ],
-                    ),
+                      _buildInfoRow(
+                        'Invoice Date',
+                        DateFormat('dd/MM/yyyy').format(invoice.invoiceDate),
+                        font: theme.defaultTextStyle.font,
+                      ),
+                      pw.Container(
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      _buildInfoRow('SAC', invoice.sac, font: theme.defaultTextStyle.font),
+                      pw.Container(
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      _buildInfoRow('Place of Supply', invoice.placeOfSupply, font: theme.defaultTextStyle.font),
+                    ],
                   ),
                 ],
               ),
             ],
           ),
-          // pw.SizedBox(height: 8),
+          pw.SizedBox(height: 8),
           // Items table
           _buildItemsTable(invoice, font: theme.defaultTextStyle.font),
           pw.SizedBox(height: 8),
@@ -188,7 +196,11 @@ class PDFService {
                             pw.SizedBox(height: 5),
                             pw.Text(
                               _numberToWords(invoice.grandTotal),
-                              style: pw.TextStyle(font: theme.defaultTextStyle.font, fontSize: 10),
+                              style: pw.TextStyle(
+                                font: theme.defaultTextStyle.font,
+                                fontSize: 10,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -365,12 +377,13 @@ class PDFService {
     );
   }
 
-  pw.TableRow _buildInfoTableRow(String label, String value, {pw.Font? font}) {
-    return pw.TableRow(
-      children: [
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: pw.Text(
+  pw.Widget _buildInfoRow(String label, String value, {pw.Font? font}) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
             label,
             style: pw.TextStyle(
               font: font,
@@ -378,19 +391,21 @@ class PDFService {
               fontSize: 10,
             ),
           ),
-        ),
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: pw.Text(
+          pw.Text(
             value,
             style: pw.TextStyle(font: font, fontSize: 10),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   pw.Widget _buildItemsTable(Invoice invoice, {pw.Font? font}) {
+    // Check if any amount is >= 10 lakh to determine column widths
+    bool hasLargeAmounts = invoice.items.any(
+      (item) => item.rate >= 1000000 || item.amount >= 1000000
+    );
+
     return pw.Table(
       border: pw.TableBorder(
         left: pw.BorderSide(color: PdfColors.black, width: 2),
@@ -399,7 +414,15 @@ class PDFService {
         horizontalInside: pw.BorderSide(color: PdfColors.black, width: 1),
         verticalInside: pw.BorderSide(color: PdfColors.black, width: 1),
       ),
-      columnWidths: {
+      columnWidths: hasLargeAmounts ? {
+        // Wide columns for large amounts (10 lakh+)
+        0: const pw.FixedColumnWidth(40),
+        1: const pw.FlexColumnWidth(2.5),
+        2: const pw.FixedColumnWidth(55),
+        3: const pw.FixedColumnWidth(100),
+        4: const pw.FixedColumnWidth(110),
+      } : {
+        // Normal columns for regular amounts
         0: const pw.FixedColumnWidth(40),
         1: const pw.FlexColumnWidth(3),
         2: const pw.FixedColumnWidth(60),
@@ -424,8 +447,8 @@ class PDFService {
                 _buildTableCell(item.serialNumber.toString(), font: font),
                 _buildTableCell(item.particulars, align: pw.TextAlign.left, font: font),
                 _buildTableCell(item.quantity.toString(), font: font),
-                _buildTableCell('₹${item.rate.toStringAsFixed(2)}', font: font),
-                _buildTableCell('₹${item.amount.toStringAsFixed(2)}', font: font),
+                _buildTableCell('₹${_formatCurrency(item.rate)}', font: font),
+                _buildTableCell('₹${_formatCurrency(item.amount)}', font: font),
               ],
             )),
       ],
@@ -462,9 +485,9 @@ class PDFService {
     String formattedAmount;
     if (showSign) {
       String sign = amount >= 0 ? '+' : '';
-      formattedAmount = '$sign₹${amount.toStringAsFixed(decimals)}';
+      formattedAmount = '$sign₹${_formatCurrency(amount, decimals: decimals)}';
     } else {
-      formattedAmount = '₹${amount.toStringAsFixed(decimals)}';
+      formattedAmount = '₹${_formatCurrency(amount, decimals: decimals)}';
     }
 
     return pw.TableRow(
@@ -582,6 +605,12 @@ class PDFService {
     }
 
     return result.trim();
+  }
+
+  String _formatCurrency(double amount, {int decimals = 2}) {
+    // Format number with Indian comma system
+    final formatter = NumberFormat('#,##,##0.${'0' * decimals}', 'en_IN');
+    return formatter.format(amount);
   }
 
   String _sanitizeFilename(String filename) {
