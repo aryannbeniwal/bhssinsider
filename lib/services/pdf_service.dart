@@ -24,7 +24,11 @@ class PDFService {
           base: font,
           bold: fontBold,
         ),
-        build: (context) => [
+        build: (context) {
+          // Get theme from context for nested tables
+          final theme = pw.Theme.of(context);
+
+          return [
           // Company header
           _buildHeader(),
           // pw.SizedBox(height: 20),
@@ -99,13 +103,14 @@ class PDFService {
                         horizontalInside: pw.BorderSide(color: PdfColors.black, width: 1),
                       ),
                       children: [
-                        _buildInfoTableRow('Invoice No.', invoice.invoiceNumber),
+                        _buildInfoTableRow('Invoice No.', invoice.invoiceNumber, font: theme.defaultTextStyle.font),
                         _buildInfoTableRow(
                           'Invoice Date',
                           DateFormat('dd/MM/yyyy').format(invoice.invoiceDate),
+                          font: theme.defaultTextStyle.font,
                         ),
-                        _buildInfoTableRow('SAC', invoice.sac),
-                        _buildInfoTableRow('Place of Supply', invoice.placeOfSupply),
+                        _buildInfoTableRow('SAC', invoice.sac, font: theme.defaultTextStyle.font),
+                        _buildInfoTableRow('Place of Supply', invoice.placeOfSupply, font: theme.defaultTextStyle.font),
                       ],
                     ),
                   ),
@@ -115,7 +120,7 @@ class PDFService {
           ),
           // pw.SizedBox(height: 8),
           // Items table
-          _buildItemsTable(invoice),
+          _buildItemsTable(invoice, font: theme.defaultTextStyle.font),
           pw.SizedBox(height: 8),
           // Totals section
           pw.Table(
@@ -147,6 +152,7 @@ class PDFService {
                             pw.Text(
                               'Terms & Conditions:',
                               style: pw.TextStyle(
+                                font: theme.defaultTextStyle.font,
                                 fontWeight: pw.FontWeight.bold,
                                 fontSize: 10,
                               ),
@@ -154,15 +160,15 @@ class PDFService {
                             pw.SizedBox(height: 3),
                             pw.Text(
                               '1. Payment due within 05 days of invoice date.',
-                              style: const pw.TextStyle(fontSize: 9),
+                              style: pw.TextStyle(font: theme.defaultTextStyle.font, fontSize: 9),
                             ),
                             pw.Text(
                               '2. Please make cheques payable to ${AppConstants.companyName}.',
-                              style: const pw.TextStyle(fontSize: 9),
+                              style: pw.TextStyle(font: theme.defaultTextStyle.font, fontSize: 9),
                             ),
                             pw.Text(
                               '3. Late payments may incur additional charges.',
-                              style: const pw.TextStyle(fontSize: 9),
+                              style: pw.TextStyle(font: theme.defaultTextStyle.font, fontSize: 9),
                             ),
                           ],
                         ),
@@ -174,6 +180,7 @@ class PDFService {
                             pw.Text(
                               'Amount in Words:',
                               style: pw.TextStyle(
+                                font: theme.defaultTextStyle.font,
                                 fontWeight: pw.FontWeight.bold,
                                 fontSize: 10,
                               ),
@@ -181,7 +188,7 @@ class PDFService {
                             pw.SizedBox(height: 5),
                             pw.Text(
                               _numberToWords(invoice.grandTotal),
-                              style: const pw.TextStyle(fontSize: 10),
+                              style: pw.TextStyle(font: theme.defaultTextStyle.font, fontSize: 10),
                             ),
                           ],
                         ),
@@ -194,11 +201,11 @@ class PDFService {
                       horizontalInside: pw.BorderSide(color: PdfColors.black, width: 1),
                     ),
                     children: [
-                      _buildTotalTableRow('Total', invoice.subtotal),
-                      _buildTotalTableRow('CGST (${invoice.cgstRate}%)', invoice.cgstAmount),
-                      _buildTotalTableRow('SGST (${invoice.sgstRate}%)', invoice.sgstAmount),
-                      _buildTotalTableRow('Round Off', invoice.roundOff, showSign: true),
-                      _buildTotalTableRow('Grand Total', invoice.grandTotal, isBold: true, decimals: 0),
+                      _buildTotalTableRow('Total', invoice.subtotal, font: theme.defaultTextStyle.font),
+                      _buildTotalTableRow('CGST (${invoice.cgstRate}%)', invoice.cgstAmount, font: theme.defaultTextStyle.font),
+                      _buildTotalTableRow('SGST (${invoice.sgstRate}%)', invoice.sgstAmount, font: theme.defaultTextStyle.font),
+                      _buildTotalTableRow('Round Off', invoice.roundOff, showSign: true, font: theme.defaultTextStyle.font),
+                      _buildTotalTableRow('Grand Total', invoice.grandTotal, isBold: true, decimals: 0, font: theme.defaultTextStyle.font),
                     ],
                   ),
                 ],
@@ -284,7 +291,8 @@ class PDFService {
               ),
             ],
           ),
-        ],
+        ];
+        },
       ),
     );
 
@@ -357,7 +365,7 @@ class PDFService {
     );
   }
 
-  pw.TableRow _buildInfoTableRow(String label, String value) {
+  pw.TableRow _buildInfoTableRow(String label, String value, {pw.Font? font}) {
     return pw.TableRow(
       children: [
         pw.Container(
@@ -365,6 +373,7 @@ class PDFService {
           child: pw.Text(
             label,
             style: pw.TextStyle(
+              font: font,
               fontWeight: pw.FontWeight.bold,
               fontSize: 10,
             ),
@@ -374,14 +383,14 @@ class PDFService {
           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: pw.Text(
             value,
-            style: const pw.TextStyle(fontSize: 10),
+            style: pw.TextStyle(font: font, fontSize: 10),
           ),
         ),
       ],
     );
   }
 
-  pw.Widget _buildItemsTable(Invoice invoice) {
+  pw.Widget _buildItemsTable(Invoice invoice, {pw.Font? font}) {
     return pw.Table(
       border: pw.TableBorder(
         left: pw.BorderSide(color: PdfColors.black, width: 2),
@@ -402,33 +411,34 @@ class PDFService {
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: PdfColors.grey300),
           children: [
-            _buildTableHeader('S.No'),
-            _buildTableHeader('Particulars'),
-            _buildTableHeader('QTY'),
-            _buildTableHeader('Rate'),
-            _buildTableHeader('Amount'),
+            _buildTableHeader('S.No', font: font),
+            _buildTableHeader('Particulars', font: font),
+            _buildTableHeader('QTY', font: font),
+            _buildTableHeader('Rate', font: font),
+            _buildTableHeader('Amount', font: font),
           ],
         ),
         // Data rows
         ...invoice.items.map((item) => pw.TableRow(
               children: [
-                _buildTableCell(item.serialNumber.toString()),
-                _buildTableCell(item.particulars, align: pw.TextAlign.left),
-                _buildTableCell(item.quantity.toString()),
-                _buildTableCell('₹${item.rate.toStringAsFixed(2)}'),
-                _buildTableCell('₹${item.amount.toStringAsFixed(2)}'),
+                _buildTableCell(item.serialNumber.toString(), font: font),
+                _buildTableCell(item.particulars, align: pw.TextAlign.left, font: font),
+                _buildTableCell(item.quantity.toString(), font: font),
+                _buildTableCell('₹${item.rate.toStringAsFixed(2)}', font: font),
+                _buildTableCell('₹${item.amount.toStringAsFixed(2)}', font: font),
               ],
             )),
       ],
     );
   }
 
-  pw.Widget _buildTableHeader(String text) {
+  pw.Widget _buildTableHeader(String text, {pw.Font? font}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(8),
       child: pw.Text(
         text,
         style: pw.TextStyle(
+          font: font,
           fontWeight: pw.FontWeight.bold,
           fontSize: 11,
         ),
@@ -437,18 +447,18 @@ class PDFService {
     );
   }
 
-  pw.Widget _buildTableCell(String text, {pw.TextAlign align = pw.TextAlign.center}) {
+  pw.Widget _buildTableCell(String text, {pw.TextAlign align = pw.TextAlign.center, pw.Font? font}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(6),
       child: pw.Text(
         text,
-        style: const pw.TextStyle(fontSize: 10),
+        style: pw.TextStyle(font: font, fontSize: 10),
         textAlign: align,
       ),
     );
   }
 
-  pw.TableRow _buildTotalTableRow(String label, double amount, {bool isBold = false, int decimals = 2, bool showSign = false}) {
+  pw.TableRow _buildTotalTableRow(String label, double amount, {bool isBold = false, int decimals = 2, bool showSign = false, pw.Font? font}) {
     String formattedAmount;
     if (showSign) {
       String sign = amount >= 0 ? '+' : '';
@@ -465,6 +475,7 @@ class PDFService {
           child: pw.Text(
             label,
             style: pw.TextStyle(
+              font: font,
               fontSize: 10,
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
@@ -475,6 +486,7 @@ class PDFService {
           child: pw.Text(
             formattedAmount,
             style: pw.TextStyle(
+              font: font,
               fontSize: 10,
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
