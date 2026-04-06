@@ -75,6 +75,55 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
     }
   }
 
+  Future<void> _copyInvoice(Invoice invoice) async {
+    try {
+      // Generate new invoice number
+      final newInvoiceNumber = await _db.getNextInvoiceNumber();
+
+      // Create a copy of the invoice with new number and today's date
+      final copiedInvoice = Invoice(
+        invoiceNumber: newInvoiceNumber,
+        invoiceDate: DateTime.now(),
+        invoiceTo: invoice.invoiceTo,
+        invoiceToAddress: invoice.invoiceToAddress,
+        sac: invoice.sac,
+        placeOfSupply: invoice.placeOfSupply,
+        items: invoice.items.map((item) => InvoiceItem(
+          serialNumber: item.serialNumber,
+          particulars: item.particulars,
+          quantity: item.quantity,
+          rate: item.rate,
+        )).toList(),
+        cgstRate: invoice.cgstRate,
+        sgstRate: invoice.sgstRate,
+      );
+
+      // Save the copied invoice to database
+      await _db.insertInvoice(copiedInvoice);
+
+      // Reload the invoice list
+      _loadInvoices();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invoice copied successfully as $newInvoiceNumber'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error copying invoice: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _deleteInvoice(Invoice invoice) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -239,10 +288,16 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
                       ),
                       const SizedBox(height: 16),
                       _buildTotalRow('Subtotal', invoice.subtotal),
+                      const Divider(),
                       _buildTotalRow('CGST (9%)', invoice.cgstAmount),
                       _buildTotalRow('SGST (9%)', invoice.sgstAmount),
+                      const Divider(),
+                      _buildTotalRow('Total Before Rounding', invoice.totalBeforeRounding, isSubtle: true),
+                      _buildTotalRow('Round Off', invoice.roundOff,
+                        showSign: true,
+                        color: invoice.roundOff >= 0 ? AppColors.success : AppColors.error),
                       const Divider(thickness: 2),
-                      _buildTotalRow('Grand Total', invoice.grandTotal, isBold: true),
+                      _buildTotalRow('Grand Total', invoice.grandTotal, isBold: true, decimals: 0),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -252,10 +307,26 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
                                 Navigator.pop(context);
                                 _navigateToInvoiceForm(invoice);
                               },
-                              icon: const Icon(Icons.edit),
+                              icon: const Icon(Icons.edit, size: 18),
                               label: const Text('Edit'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _copyInvoice(invoice);
+                              },
+                              icon: const Icon(Icons.copy, size: 18),
+                              label: const Text('Copy'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
                             ),
                           ),
@@ -266,10 +337,11 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
                                 Navigator.pop(context);
                                 _exportToPDF(invoice);
                               },
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text('Export PDF'),
+                              icon: const Icon(Icons.picture_as_pdf, size: 18),
+                              label: const Text('PDF'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.success,
+                                backgroundColor: AppColors.accent,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
                             ),
                           ),
@@ -321,7 +393,29 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
     );
   }
 
-  Widget _buildTotalRow(String label, double amount, {bool isBold = false}) {
+  Widget _buildTotalRow(
+    String label,
+    double amount, {
+    bool isBold = false,
+    int decimals = 2,
+    bool showSign = false,
+    bool isSubtle = false,
+    Color? color,
+  }) {
+    String formattedAmount;
+    if (showSign) {
+      String sign = amount >= 0 ? '+' : '-';
+      formattedAmount = '$sign₹ ${amount.abs().toStringAsFixed(decimals)}';
+    } else {
+      formattedAmount = '₹ ${amount.toStringAsFixed(decimals)}';
+    }
+
+    final textStyle = isBold
+        ? AppTextStyles.heading4
+        : isSubtle
+            ? AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)
+            : AppTextStyles.bodyMedium;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -329,11 +423,14 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
         children: [
           Text(
             label,
-            style: isBold ? AppTextStyles.heading4 : AppTextStyles.bodyMedium,
+            style: textStyle,
           ),
           Text(
-            '₹ ${amount.toStringAsFixed(2)}',
-            style: isBold ? AppTextStyles.heading4 : AppTextStyles.bodyMedium,
+            formattedAmount,
+            style: textStyle.copyWith(
+              color: color,
+              fontWeight: isBold ? FontWeight.bold : null,
+            ),
           ),
         ],
       ),
@@ -451,6 +548,16 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
                                                 ),
                                               ),
                                               const PopupMenuItem(
+                                                value: 'copy',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.copy, size: 20, color: AppColors.success),
+                                                    SizedBox(width: 8),
+                                                    Text('Copy'),
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem(
                                                 value: 'pdf',
                                                 child: Row(
                                                   children: [
@@ -478,6 +585,8 @@ class _InvoicesListScreenState extends State<InvoicesListScreen> {
                                                 _showInvoiceDetails(invoice);
                                               } else if (value == 'edit') {
                                                 _navigateToInvoiceForm(invoice);
+                                              } else if (value == 'copy') {
+                                                _copyInvoice(invoice);
                                               } else if (value == 'pdf') {
                                                 _exportToPDF(invoice);
                                               } else if (value == 'delete') {

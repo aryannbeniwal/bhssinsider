@@ -118,3 +118,4 @@ This ensures item list stays in sync with invoice
 - No backend - all data stored locally in SQLite
 - Login is not secure - meant for single admin use on trusted device
 - Invoice PDFs use external storage permission on Android
+- to memorize any functional change in invoice in any of the part like pdf, invoice screen, view bottomsheet,should be implement in all three screens
