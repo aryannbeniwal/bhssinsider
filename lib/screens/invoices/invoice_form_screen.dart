@@ -118,6 +118,26 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     }
   }
 
+  void _copyItem(int index) {
+    final itemToCopy = _items[index];
+    setState(() {
+      // Insert the copied item right below the current item
+      _items.insert(
+        index + 1,
+        InvoiceItemWidget(
+          key: UniqueKey(),
+          serialNumber: index + 2,
+          particulars: itemToCopy.particularsController.text,
+          quantity: int.tryParse(itemToCopy.quantityController.text) ?? 0,
+          rate: double.tryParse(itemToCopy.rateController.text) ?? 0.0,
+          particularsController: TextEditingController(text: itemToCopy.particularsController.text),
+          quantityController: TextEditingController(text: itemToCopy.quantityController.text),
+          rateController: TextEditingController(text: itemToCopy.rateController.text),
+        ),
+      );
+    });
+  }
+
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -145,8 +165,16 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     return _calculateSubtotal() * AppConstants.sgstRate / 100;
   }
 
-  double _calculateGrandTotal() {
+  double _calculateTotalBeforeRounding() {
     return _calculateSubtotal() + _calculateCGST() + _calculateSGST();
+  }
+
+  double _calculateGrandTotal() {
+    return _calculateTotalBeforeRounding().round().toDouble();
+  }
+
+  double _calculateRoundOff() {
+    return _calculateGrandTotal() - _calculateTotalBeforeRounding();
   }
 
   String _numberToWords(double number) {
@@ -475,28 +503,19 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                         itemCount: _items.length,
                         itemBuilder: (context, index) {
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: InvoiceItemWidget(
-                                    key: _items[index].key,
-                                    serialNumber: index + 1,
-                                    particulars: _items[index].particulars,
-                                    quantity: _items[index].quantity,
-                                    rate: _items[index].rate,
-                                    onChanged: () => setState(() {}),
-                                    particularsController: _items[index].particularsController,
-                                    quantityController: _items[index].quantityController,
-                                    rateController: _items[index].rateController,
-                                  ),
-                                ),
-                                if (_items.length > 1)
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: AppColors.error),
-                                    onPressed: () => _removeItem(index),
-                                  ),
-                              ],
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: InvoiceItemWidget(
+                              key: _items[index].key,
+                              serialNumber: index + 1,
+                              particulars: _items[index].particulars,
+                              quantity: _items[index].quantity,
+                              rate: _items[index].rate,
+                              onChanged: () => setState(() {}),
+                              onCopy: () => _copyItem(index),
+                              onDelete: _items.length > 1 ? () => _removeItem(index) : null,
+                              particularsController: _items[index].particularsController,
+                              quantityController: _items[index].quantityController,
+                              rateController: _items[index].rateController,
                             ),
                           );
                         },
@@ -513,26 +532,56 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
+                      const Text(
+                        'Summary',
+                        style: AppTextStyles.heading4,
+                      ),
+                      const SizedBox(height: 12),
                       _buildTotalRow('Subtotal', _calculateSubtotal()),
                       const Divider(),
                       _buildTotalRow('CGST (${AppConstants.cgstRate}%)', _calculateCGST()),
                       _buildTotalRow('SGST (${AppConstants.sgstRate}%)', _calculateSGST()),
+                      const Divider(),
+                      _buildTotalRow(
+                        'Total Before Rounding',
+                        _calculateTotalBeforeRounding(),
+                        isSubtle: true,
+                      ),
+                      _buildTotalRow(
+                        'Round Off',
+                        _calculateRoundOff(),
+                        showSign: true,
+                        color: _calculateRoundOff() >= 0 ? AppColors.success : AppColors.error,
+                      ),
                       const Divider(thickness: 2),
                       _buildTotalRow(
                         'Grand Total',
                         _calculateGrandTotal(),
                         isBold: true,
+                        decimals: 0,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          'Amount in words: ${_numberToWords(_calculateGrandTotal())}',
-                          style: AppTextStyles.bodySmall,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Amount in Words:',
+                              style: AppTextStyles.label,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _numberToWords(_calculateGrandTotal()),
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -597,7 +646,29 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     );
   }
 
-  Widget _buildTotalRow(String label, double amount, {bool isBold = false}) {
+  Widget _buildTotalRow(
+    String label,
+    double amount, {
+    bool isBold = false,
+    int decimals = 2,
+    bool showSign = false,
+    bool isSubtle = false,
+    Color? color,
+  }) {
+    String formattedAmount;
+    if (showSign) {
+      String sign = amount >= 0 ? '+' : '-';
+      formattedAmount = '$sign₹ ${amount.abs().toStringAsFixed(decimals)}';
+    } else {
+      formattedAmount = '₹ ${amount.toStringAsFixed(decimals)}';
+    }
+
+    final textStyle = isBold
+        ? AppTextStyles.heading4
+        : isSubtle
+            ? AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)
+            : AppTextStyles.bodyMedium;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -605,11 +676,14 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         children: [
           Text(
             label,
-            style: isBold ? AppTextStyles.heading4 : AppTextStyles.bodyMedium,
+            style: textStyle,
           ),
           Text(
-            '₹ ${amount.toStringAsFixed(2)}',
-            style: isBold ? AppTextStyles.heading4 : AppTextStyles.bodyMedium,
+            formattedAmount,
+            style: textStyle.copyWith(
+              color: color,
+              fontWeight: isBold ? FontWeight.bold : null,
+            ),
           ),
         ],
       ),
@@ -623,6 +697,8 @@ class InvoiceItemWidget extends StatefulWidget {
   final int quantity;
   final double rate;
   final VoidCallback? onChanged;
+  final VoidCallback? onCopy;
+  final VoidCallback? onDelete;
 
   final TextEditingController particularsController;
   final TextEditingController quantityController;
@@ -635,6 +711,8 @@ class InvoiceItemWidget extends StatefulWidget {
     this.quantity = 0,
     this.rate = 0.0,
     this.onChanged,
+    this.onCopy,
+    this.onDelete,
     TextEditingController? particularsController,
     TextEditingController? quantityController,
     TextEditingController? rateController,
@@ -678,37 +756,83 @@ class _InvoiceItemWidgetState extends State<InvoiceItemWidget> {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header row with item number and action buttons
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    '${widget.serialNumber}.',
-                    style: AppTextStyles.bodyMedium,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    controller: widget.particularsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Particulars',
-                      border: OutlineInputBorder(),
-                      isDense: true,
+                  child: Text(
+                    'Item ${widget.serialNumber}',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                Row(
+                  children: [
+                    // Copy button
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 20),
+                      onPressed: widget.onCopy,
+                      color: AppColors.success,
+                      tooltip: 'Copy item',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 8),
+                    // Delete button
+                    if (widget.onDelete != null)
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20),
+                        onPressed: widget.onDelete,
+                        color: AppColors.error,
+                        tooltip: 'Delete item',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Particulars field (full width)
+            TextField(
+              controller: widget.particularsController,
+              decoration: const InputDecoration(
+                labelText: 'Particulars / Description',
+                border: OutlineInputBorder(),
+                isDense: true,
+                contentPadding: EdgeInsets.all(12),
+              ),
+              maxLines: 2,
+              onChanged: (_) => widget.onChanged?.call(),
+            ),
+            const SizedBox(height: 12),
+
+            // Bottom row with QTY, Rate, and Amount
+            Row(
+              children: [
+                // Quantity
                 Expanded(
+                  flex: 2,
                   child: TextField(
                     controller: widget.quantityController,
                     decoration: const InputDecoration(
                       labelText: 'QTY',
                       border: OutlineInputBorder(),
                       isDense: true,
+                      contentPadding: EdgeInsets.all(12),
                       hintText: '0',
                     ),
                     keyboardType: TextInputType.number,
@@ -722,14 +846,18 @@ class _InvoiceItemWidgetState extends State<InvoiceItemWidget> {
                   ),
                 ),
                 const SizedBox(width: 8),
+
+                // Rate
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: TextField(
                     controller: widget.rateController,
                     decoration: const InputDecoration(
                       labelText: 'Rate',
                       border: OutlineInputBorder(),
                       isDense: true,
+                      contentPadding: EdgeInsets.all(12),
+                      prefixText: '₹ ',
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [
@@ -742,11 +870,35 @@ class _InvoiceItemWidgetState extends State<InvoiceItemWidget> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    '₹ ${widget.getAmount().toStringAsFixed(2)}',
-                    style: AppTextStyles.bodyMedium,
+
+                // Amount (read-only display)
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Amount',
+                          style: AppTextStyles.caption.copyWith(
+                            fontSize: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '₹ ${widget.getAmount().toStringAsFixed(2)}',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

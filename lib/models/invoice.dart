@@ -26,7 +26,7 @@ class Invoice {
   }) : createdAt = createdAt ?? DateTime.now();
 
   double get subtotal {
-    return items.fold(0, (sum, item) => sum + item.amount);
+    return items.fold(0.0, (sum, item) => sum + item.amount);
   }
 
   double get cgstAmount {
